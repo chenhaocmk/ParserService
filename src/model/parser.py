@@ -3,16 +3,30 @@ Parser classes
 """
 import string
 
-import src.config.parserConfig as parser_config
+from src.common.unit import Unit
 
 __author__ = 'haochen'
 
 
+MAX_ELEMENTS_IN_INPUT = 3
+UNIT_DICT = {
+    'cup': Unit.CUP,
+    'cups': Unit.CUP,
+    'tsp': Unit.TEASPOON,
+    'tsp.': Unit.TEASPOON,
+    'teaspoon': Unit.TEASPOON,
+    'teaspoons': Unit.TEASPOON,
+    'g': Unit.GRAM,
+    'gram': Unit.GRAM,
+    'grams': Unit.GRAM
+}
+
+
 class Parser(object):
-    def parse(self, input: str) -> dict:
+    def parse(self, input_string: str) -> dict:
         """
         Parse the input str to dict as output. Required be implemented for child classes.
-        :param input: Input string.
+        :param input_string: Input string.
         :return: Output dict.
         """
         raise NotImplementedError("You have to set this method on subclasses")
@@ -20,33 +34,78 @@ class Parser(object):
 
 class IngredientParser(Parser):
     def __init__(self):
-        self.number = ""
+        """
+        This parser parse the input string to dict with number, unit and item
+        """
+        self.number = None
         self.unit = None
+        self.item = None
 
-    def starts_with_number(self, txt):
-        if txt[0] in string.digits:
-            return True
-        else:
-            return False
+        self.input_list = []
+        self.curr_index = 0
 
-    def parse_remainder(self, num_chars, txt):
-        return self.parse(txt[num_chars:].strip())
+    def parse(self, input_string: str):
+        """
+        Parse input string to dict with number, unit and item
+        :param input_string: Input string
+        :return: Desired structure of parsed info
+        """
+        self._clear()
+        self.input_list = input_string.split(maxsplit=MAX_ELEMENTS_IN_INPUT)
+        self.curr_index = 0
 
-    def parse(self, txt):
-        if self.starts_with_number(txt):
-            self.number += txt[0]
-            return self.parse_remainder(1, txt)
-        else:
-            # maybe it's a unit
-            for unit in parser_config.UNITS:
-                for suffix in ['s', '.', '']:
-                    suf_unit = unit + suffix
-                    l = len(suf_unit)
-                    if txt[:l].lower() == suf_unit:
-                        self.unit = unit
-                        return self.parse_remainder(len(suf_unit), txt)
+        self._parse_number()
+        self._parse_unit()
+        self._parse_item()
 
-            # we must be at the item
-            return {"n": int(self.number) if self.number != "" else None,
-                    "u": self.unit,
-                    "f": txt.strip()}
+        return self._output()
+
+    def _parse_number(self):
+        """
+        Try parse number of the input for element at current index of input list
+        Increase index if number is found
+        """
+        # Only digit and dot are accepted. Oct and Hex not supported.
+        if self.number is None and set(self.input_list[self.curr_index]).issubset(string.digits + '.'):
+            if '.' in self.input_list[self.curr_index]:
+                self.number = float(self.input_list[self.curr_index])
+            else:
+                self.number = int(self.input_list[self.curr_index])
+            self.curr_index += 1
+
+    def _parse_unit(self):
+        """
+        Try parse unit of the input for element at current index of input list
+        Increase index if unit is found
+        """
+        if self.unit is None and self.input_list[self.curr_index].lower() in UNIT_DICT:
+            self.unit = UNIT_DICT[self.input_list[self.curr_index].lower()]
+            self.curr_index += 1
+
+            # remove the coming up "of"
+            if self.input_list[self.curr_index].lower() == 'of':
+                self.curr_index += 1
+
+    def _parse_item(self):
+        """
+        Parse item of the input for elements start at current index
+        """
+        if self.item is None:
+            self.item = ' '.join(self.input_list[self.curr_index:])
+
+    def _clear(self):
+        """
+        Clear current parser
+        """
+        self.__init__()
+
+    def _output(self):
+        """
+        Output a dict of number/unit/item
+        :return: dict
+        """
+        return {
+            'number': str(self.number) if self.number is not None else '',
+            'unit': self.unit.name.lower() if self.unit is not None else '',
+            'item': self.item if self.item else ''
+        }
