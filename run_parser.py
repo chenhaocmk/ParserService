@@ -2,14 +2,6 @@ import string
 import sys
 
 
-
-
-
-
-
-
-
-
 # def assert_works(input, expectation):
 #     parser = IngredientParser()
 #     result = parser.parse(input)

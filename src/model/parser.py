@@ -3,7 +3,7 @@ Parser classes
 """
 import string
 
-import src.config.parser_config as parser_config
+import src.config.parserConfig as parser_config
 
 __author__ = 'haochen'
 
