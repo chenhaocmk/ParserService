@@ -102,7 +102,7 @@ class IngredientParser(Parser):
     def _output(self):
         """
         Output a dict of number/unit/item
-        :return: dict
+        :return: output dict
         """
         return {
             'number': str(self.number) if self.number is not None else '',

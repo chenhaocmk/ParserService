@@ -1,35 +1,20 @@
-import string
-import sys
+from flask import Flask, jsonify, request
 
+from src.util.schemaValidation import validate_json, validate_input_schema, validate_output_schema
+import src.schema.parse as s_parse
+from src.model.parser import IngredientParser
 
-# def assert_works(input, expectation):
-#     parser = IngredientParser()
-#     result = parser.parse(input)
-#     assert result == expectation
-#
-#
-# assert_works("1 cup vinegar", {"n": 1,
-#                                "u": "cup",
-#                                "f": "vinegar"})
-# assert_works("15 g. all purpose flour", {"n": 15,
-#                                          "u": "g",
-#                                          "f": "all purpose flour"})
-# assert_works("doesn't have an ingredient", {"n": None,
-#                                             "u": None,
-#                                             "f": "doesn't have an ingredient"})
-
-
-from flask import Flask, jsonify
-from flask import request
 
 app = Flask(__name__)
 
 
-@app.route('/')
-def hello():
-    ingredient = request.args.get('ing')
-    parser = IngredientParser()
-    return jsonify(parser.parse(ingredient))
+@app.route('/parse/ingredient', methods=['POST'])
+@validate_json
+@validate_input_schema(s_parse.INPUT_SCHEMA)
+@validate_output_schema(s_parse.OUTPUT_SCHEMA)
+def parse_string():
+    input_string = request.json['input_string']
+    return IngredientParser().parse(input_string)
 
-app.run()
 
+app.run(host='127.0.0.1', port=8122)

@@ -27,6 +27,9 @@ class TestIngredientParser(unittest.TestCase):
         self.assertEqual(parser.parse('3.5 GRAMS xanthum gum'), {
             'number': '3.5', 'unit': 'gram', 'item': 'xanthum gum'
         })
+        self.assertEqual(parser.parse('-3.5 GRAMS xanthum gum'), {
+            'number': '', 'item': '-3.5 GRAMS xanthum gum', 'unit': ''
+        })
 
 if __name__ == '__main__':
     unittest.main()
